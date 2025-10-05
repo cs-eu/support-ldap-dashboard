@@ -1,0 +1,14 @@
+services:
+     
+  database:
+    image: mysql
+    container_name: mysql
+    # command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: newman
+      MYSQL_USER: newman
+      MYSQL_PASSWORD: database_passwd
+      MYSQL_ROOT_PASSWORD: database_passwd
+    ports:
+      - '3307:3306'
+  
