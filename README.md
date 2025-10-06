@@ -1,66 +1,144 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Development Setup
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Prerequisites
+
+* Working [`docker`](https://www.docker.com/) installation
+* [`OpenLDAP`](https://www.openldap.org/) installed
+
+Install Laravel Passport:
+
+```bash
+composer require laravel/passport
+```
+
+---
+
+## Peripheral Services
+
+The **Verwaltungssystem** requires access to a MySQL database and an LDAP instance. For development, you can start them via Docker:
+
+```bash
+# Start containers
+docker compose -f docker-compose-dev.yaml up -d
+
+# Stop containers
+docker compose -f docker-compose-dev.yaml down
+```
+
+---
+
+## Generate a Custom Encryption Key
+
+Some database data is encrypted to ensure privacy. Generate a new encryption key locally:
+
+```bash
+php artisan key:custom
+php artisan key:generate
+
+# Clear caches
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+> **Warning:** Only do this in a production environment with extreme caution.
+
+---
+
+## Initialize Database and LDAP
+
+Before logging in, the database and LDAP must be prepared. This step may need to be repeated when peripheral services are restarted.
+
+```bash
+# Import LDAP data
+ldapadd -D cn=admin,dc=newman-net,dc=de -w ldap_passwd -f aktiveBewohner.ldif
+ldapadd -D cn=admin,dc=newman-net,dc=de -w ldap_passwd -f alleBewohner.ldif
+
+# Reset and initialize database
+php artisan db:reset
+```
+
+---
+
+## Starting Your Local Instance
+
+Run the following commands in **two separate terminal sessions**:
+
+```bash
+php artisan serve
+npm run dev
+```
+
+---
+
+## Seed Database (Optional)
+
+Generate artificial data for development:
+
+```bash
+php artisan db:seed --class=FakingDatabaseSeeder
+```
+
+---
+
+# Important Files
+
+| Path                   | Description                            |
+| ---------------------- | -------------------------------------- |
+| `/routes/web`          | HTTP endpoints for web requests        |
+| `/routes/api`          | HTTP endpoints for API requests        |
+| `/app/Console`         | Console commands (can be scheduled)    |
+| `/app/Http`            | Controllers, Middleware, Requests      |
+| `/app/Ldap`            | LDAP contact synchronization           |
+| `/app/Models`          | Eloquent model classes                 |
+| `/app/Policies`        | Model access policies                  |
+| `/app/Util`            | Utility classes (e.g., PDF generation) |
+| `/database/migrations` | Database table definitions             |
+| `/database/seeders`    | Seeders for test or imported data      |
+| `/lang`                | Translation files                      |
+| `resources/js`         | Frontend Vue.js code                   |
+| `resources/js/Pages`   | Pages rendered via Inertia.js          |
+
+---
+
+# Important Commands
+
+| Command         | Description                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| `key:custom`    | Create a custom database encryption key. Re-encrypts all data if a previous key exists.       |
+| `db:reset`      | Reset the database and LDAP.                                                                  |
+| `ldap:active`   | Updates active inhabitants in LDAP (scheduled daily).                                         |
+| `radius:active` | Disables network accounts of recently moved-out inhabitants (scheduled daily).                |
+| `radius:users`  | Re-generates the `users` file and restarts the authentication server after important changes. |
+
+---
+
+# Laravel
 
 ## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Laravel is a web framework with expressive syntax that simplifies development tasks, including:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* Fast and simple [routing](https://laravel.com/docs/routing)
+* Dependency injection container
+* Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage
+* [ORM (Eloquent)](https://laravel.com/docs/eloquent) for database management
+* Database agnostic [migrations](https://laravel.com/docs/migrations)
+* Background job processing ([queues](https://laravel.com/docs/queues))
+* Real-time event broadcasting ([broadcasting](https://laravel.com/docs/broadcasting))
 
 ## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Comprehensive [documentation](https://laravel.com/docs) and video tutorials make it easy to get started.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Updating Laravel
 
-## Laravel Sponsors
+When updating Laravel:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. Check the [Laravel upgrade guide](https://laravel.com/docs/11.x/upgrade) for the target version.
+2. Update the packages in `composer.json` to match the upgrade requirements.
+3. Follow the guide to complete the update.
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
